@@ -193,12 +193,11 @@ void reconnectMQTT()
 }
 
 void sendAngleConfirm() {
-  if (servos[current_motor].read() == current_angle) {
-    client.publish(TOPIC_PUB_EXE, ("DeviceRoboArm001@moveMotor" + String(current_motor + 1) + "|Succeeded:" + String(current_angle)).c_str());
-  } else {
-    client.publish(TOPIC_PUB_EXE, ("DeviceRoboArm001@moveMotor" + String(current_motor + 1) + "|Failed:" + String(current_angle)).c_str());
-  }
-  mqttStatusThread.enabled = false;
+    if (servos[current_motor].read() == current_angle) {
+      client.publish(TOPIC_PUB_EXE, ("DeviceRoboArm001@moveMotor" + String(current_motor + 1) + "|Succeeded:" + String(current_angle)).c_str());
+    } else {
+      client.publish(TOPIC_PUB_EXE, ("DeviceRoboArm001@moveMotor" + String(current_motor + 1) + "|Failed:" + String(current_angle)).c_str());
+    }
 }
 
 void sendAngleMQTT(int servoId, int angle) {
@@ -214,7 +213,8 @@ void moveRoboArm(int i, int angle, bool shouldWait)
 }
 
 void moves(int servoId, int angle, bool shouldWait = false) {
-  angle = angleCorrection(servoId, angle);
+  
+  //angle = angleCorrection(servoId, angle);
   sendAngleMQTT(servoId, angle);
   moveRoboArm(servoId, angle, shouldWait);
 }
@@ -342,17 +342,17 @@ void setup() {
   mqttStatusThread.setInterval(500);
   mqttStatusThread.enabled = false;
 
-  joystickControl1.onRun(processJoystickRight);
-  joystickControl1.setInterval(50);
+  //joystickControl1.onRun(processJoystickRight);
+  //joystickControl1.setInterval(50);
 
-  joystickControl2.onRun(processJoystickLeft);
-  joystickControl2.setInterval(50);
+  //joystickControl2.onRun(processJoystickLeft);
+  //joystickControl2.setInterval(50);
 
   controller.add(&mqttLoopThread);
   controller.add(&mqttReadThread);
   controller.add(&mqttStatusThread);
-  controller.add(&joystickControl1);
-  controller.add(&joystickControl2);
+  //controller.add(&joystickControl1);
+  //controller.add(&joystickControl2);
 }
 
 void loop() {
