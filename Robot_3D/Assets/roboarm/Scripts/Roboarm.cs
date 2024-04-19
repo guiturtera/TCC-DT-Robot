@@ -1,3 +1,4 @@
+using PimDeWitte.UnityMainThreadDispatcher.Assets.roboarm.Scripts;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -76,6 +77,7 @@ public class Roboarm : MonoBehaviour
 
     public float GetAngleRotationServo1()
     {
+        /*
         if(_roboarmServo1.localEulerAngles.x > 180)
         {
             float amount = _roboarmServo1.localEulerAngles.x > 350 ? 360 - _roboarmServo1.localEulerAngles.x : 10;
@@ -83,59 +85,81 @@ public class Roboarm : MonoBehaviour
         }
         else
             return _roboarmServo1.localEulerAngles.x + 40;
+        */
+
+        return _roboarmServo1.localEulerAngles.x;
     }
     
     public void SetAngleRotationServo1(float angle)
     {
-        if(angle >= 30 && angle <= 130)
-            _roboarmServo1.localEulerAngles = new Vector3(angle - 40, 0, 0);
+        // if(angle >= 30 && angle <= 130)
+        // _roboarmServo1.localEulerAngles = new Vector3(angle - 40, 0, 0);
+        //if(angle <= 130)
+        //    _roboarmServo1.localEulerAngles = new Vector3(angle, 0, 0);
+
+        _roboarmServo1.localEulerAngles = new Vector3(angle, 0, 0);
     }
 
     public float GetAngleRotationServo2()
     {
+        /*
         float amount = _roboarmServo2.localEulerAngles.z >= 280 ? 360 - _roboarmServo2.localEulerAngles.z : 0;
         return 155 - amount;
+        */
+        return _roboarmServo2.localEulerAngles.z;
     }
     
     public void SetAngleRotationServo2(float angle)
     {
-        if(angle >= 75 && angle <= 155)
-            Debug.Log("angle => "+angle);
-            _roboarmServo2.localEulerAngles = new Vector3(0, 0, 0 - (155 - angle));
+
+        //if(angle >= 75 && angle <= 155)
+        //    Debug.Log("angle => "+angle);
+        //    _roboarmServo2.localEulerAngles = new Vector3(0, 0, 0 - (155 - angle));
+
+        _roboarmServo2.localEulerAngles = new Vector3(0, 0, angle);
     }
 
     public float GetAngleRotationServo3()
     {
-        if(_roboarmServo3.localRotation.eulerAngles.y > 180)
-        {
-            float amount = _roboarmServo3.localEulerAngles.y >= 270 ? 360 - _roboarmServo3.localEulerAngles.y : 270;
-            return amount + 90;
-        }
-        else
-            return 90 - _roboarmServo3.localEulerAngles.y;
+        //if(_roboarmServo3.localRotation.eulerAngles.y > 180)
+        //{
+        //    float amount = _roboarmServo3.localEulerAngles.y >= 270 ? 360 - _roboarmServo3.localEulerAngles.y : 270;
+        //    return amount + 90;
+        //}
+        //else
+        //    return 90 - _roboarmServo3.localEulerAngles.y;
+
+        return _roboarmServo3.localEulerAngles.y;
     }
     
     public void SetAngleRotationServo3(float angle)
     {
-        if(angle >= 0 && angle <= 180)
-            _roboarmServo3.localEulerAngles = new Vector3(0, -angle + 90, 0);
+        //if(angle >= 0 && angle <= 180)
+        //    _roboarmServo3.localEulerAngles = new Vector3(0, -angle + 90, 0);
+
+        _roboarmServo3.localEulerAngles = new Vector3(0, angle, 0);
     }
 
     public float GetAngleRotationServo4()
     {
-        if(_roboarmServo4.localRotation.eulerAngles.x > 180)
-        {
-            float amount = _roboarmServo4.localEulerAngles.x >= 275 ? 360 - _roboarmServo4.localEulerAngles.x : 275;
-            return amount + 66;
-        }
-        else
-            return 66 - _roboarmServo4.localEulerAngles.x;
+        //if(_roboarmServo4.localRotation.eulerAngles.x > 180)
+        //{
+        //    float amount = _roboarmServo4.localEulerAngles.x >= 275 ? 360 - _roboarmServo4.localEulerAngles.x : 275;
+        //    return amount + 66;
+        //}
+        //else
+        //    return 66 - _roboarmServo4.localEulerAngles.x;
+
+        return _roboarmServo4.localEulerAngles.x + 180;
     }
 
     public void SetAngleRotationServo4(float angle)
     {
-        if(angle >= 10 && angle <= 151)
-            _roboarmServo4.localEulerAngles = new Vector3(66 - angle, 0, 0);
+        //if(angle >= 10 && angle <= 151)
+        //    _roboarmServo4.localEulerAngles = new Vector3(66 - angle, 0, 0);
+
+
+        _roboarmServo4.localEulerAngles = new Vector3(angle - 180, 0, 0);
     }
 
     private Vector3 InvertRotationAxisX(Transform transformReference)
@@ -218,21 +242,25 @@ public class Roboarm : MonoBehaviour
     // Metódo de Publish, envia os valores dos servo motores para o Orion 
     private void PublicaServo(string servo)
     {
-        if(servo == "servo1")
+        if (servo == "servo1")
         {
-            MqttManager.instancia.MoveRoboArmServo1(GetAngleRotationServo1());
+            // MqttManager.instancia.MoveRoboArmServo1(GetAngleRotationServo1());    
+            HttpManager.GetInstance().PostMotorCommand("moveMotor1", GetAngleRotationServo1());
         }
         else if(servo == "servo2")
         {
-            MqttManager.instancia.MoveRoboArmServo2(GetAngleRotationServo2());
+            // MqttManager.instancia.MoveRoboArmServo2(GetAngleRotationServo2());
+            HttpManager.GetInstance().PostMotorCommand("moveMotor2", GetAngleRotationServo2());
         }
         else if(servo == "servo3")
         {
-            MqttManager.instancia.MoveRoboArmServo3(GetAngleRotationServo3());
+            // MqttManager.instancia.MoveRoboArmServo3(GetAngleRotationServo3());
+            HttpManager.GetInstance().PostMotorCommand("moveMotor3", GetAngleRotationServo3());
         }
         else if(servo == "servo4")
         {
-            MqttManager.instancia.MoveRoboArmServo4(GetAngleRotationServo4());
+            // MqttManager.instancia.MoveRoboArmServo4(GetAngleRotationServo4());
+            HttpManager.GetInstance().PostMotorCommand("moveMotor4", GetAngleRotationServo4());
         }
     }
 
