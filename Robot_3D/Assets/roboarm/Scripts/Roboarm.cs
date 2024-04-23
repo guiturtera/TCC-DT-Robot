@@ -7,7 +7,8 @@ public class Roboarm : MonoBehaviour
 {
     public static Roboarm instancia;
 
-    private void Awake() {
+    private void Awake()
+    {
         instancia = this;
     }
 
@@ -34,7 +35,7 @@ public class Roboarm : MonoBehaviour
     private const string ROBOARM_SERVO_2_PATH = ROBOARM_SUPORTE_GARRA + "/servo_2";
     private const string ROBOARM_GARRA_ALAVANCA_MECANISMO = ROBOARM_SERVO_2_PATH + "/garra_mecanismo_2";
     private Transform _roboarmServo1, _roboarmServo2, _roboarmServo3, _roboarmServo4;
-    private Transform _roboarm01, _roboarm05, _roboarm06, _roboarm07,_roboarm09,_roboarm11;
+    private Transform _roboarm01, _roboarm05, _roboarm06, _roboarm07, _roboarm09, _roboarm11;
     private Transform _roboarmSuporteGarra, _roboarmGarraDireita, _roboarmGarraEsquerda, _roboarmGarraAlavancaMecanismo;
     private Vector3 _suporteGarraPosicaoFrente;
 
@@ -44,7 +45,7 @@ public class Roboarm : MonoBehaviour
     {
         canPublishServo = true;
     }
-    
+
     void Start()
     {
         _roboarmServo1 = transform.Find(ROBOARM_SERVO_1_PATH);
@@ -89,7 +90,7 @@ public class Roboarm : MonoBehaviour
 
         return _roboarmServo1.localEulerAngles.x;
     }
-    
+
     public void SetAngleRotationServo1(float angle)
     {
         // if(angle >= 30 && angle <= 130)
@@ -108,13 +109,15 @@ public class Roboarm : MonoBehaviour
         */
         return _roboarmServo2.localEulerAngles.z;
     }
-    
+
     public void SetAngleRotationServo2(float angle)
     {
 
         //if(angle >= 75 && angle <= 155)
         //    Debug.Log("angle => "+angle);
         //    _roboarmServo2.localEulerAngles = new Vector3(0, 0, 0 - (155 - angle));
+
+        angle -= 180;
 
         _roboarmServo2.localEulerAngles = new Vector3(0, 0, angle);
     }
@@ -131,11 +134,13 @@ public class Roboarm : MonoBehaviour
 
         return _roboarmServo3.localEulerAngles.y;
     }
-    
+
     public void SetAngleRotationServo3(float angle)
     {
         //if(angle >= 0 && angle <= 180)
         //    _roboarmServo3.localEulerAngles = new Vector3(0, -angle + 90, 0);
+
+        angle = 90 - angle;
 
         _roboarmServo3.localEulerAngles = new Vector3(0, angle, 0);
     }
@@ -150,7 +155,7 @@ public class Roboarm : MonoBehaviour
         //else
         //    return 66 - _roboarmServo4.localEulerAngles.x;
 
-        return _roboarmServo4.localEulerAngles.x + 180;
+        return _roboarmServo4.localEulerAngles.x;
     }
 
     public void SetAngleRotationServo4(float angle)
@@ -158,8 +163,9 @@ public class Roboarm : MonoBehaviour
         //if(angle >= 10 && angle <= 151)
         //    _roboarmServo4.localEulerAngles = new Vector3(66 - angle, 0, 0);
 
+        angle = 125 - angle;
 
-        _roboarmServo4.localEulerAngles = new Vector3(angle - 180, 0, 0);
+        _roboarmServo4.localEulerAngles = new Vector3(angle, 0, 0);
     }
 
     private Vector3 InvertRotationAxisX(Transform transformReference)
@@ -168,7 +174,7 @@ public class Roboarm : MonoBehaviour
         vector.x *= -1;
         return vector;
     }
-    
+
     private Vector3 InvertRotationAxisZ(Transform transformReference)
     {
         Vector3 vector = transformReference.localRotation.eulerAngles;
@@ -198,7 +204,7 @@ public class Roboarm : MonoBehaviour
         float servo2NewRotation = Input.GetAxisRaw("HorizontalR") * servo2RotationSpeed * Time.deltaTime;
         float servo3NewRotation = Input.GetAxisRaw("Horizontal") * servo3RotationSpeed * Time.deltaTime;
         float servo4NewRotation = Input.GetAxisRaw("VerticalR") * servo4RotationSpeed * Time.deltaTime;
-        
+
         _roboarmServo1.Rotate(servo1NewRotation, 0, 0);
         _roboarmServo2.Rotate(0, 0, servo2NewRotation);
         _roboarmServo3.Rotate(0, servo3NewRotation, 0);
@@ -221,19 +227,19 @@ public class Roboarm : MonoBehaviour
         _roboarmServo3Aux = GetAngleRotationServo3();
         _roboarmServo4Aux = GetAngleRotationServo4();
 
-        if(Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.DownArrow))
+        if (Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.DownArrow))
         {
             PublicaServo("servo4");
         }
-        else if(Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow))
+        else if (Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow))
         {
             PublicaServo("servo2");
         }
-        else if(Input.GetKeyUp("d") || Input.GetKeyUp("a"))
+        else if (Input.GetKeyUp("d") || Input.GetKeyUp("a"))
         {
             PublicaServo("servo3");
         }
-        else if(Input.GetKeyUp("w") || Input.GetKeyUp("s"))
+        else if (Input.GetKeyUp("w") || Input.GetKeyUp("s"))
         {
             PublicaServo("servo1");
         }
@@ -247,17 +253,17 @@ public class Roboarm : MonoBehaviour
             // MqttManager.instancia.MoveRoboArmServo1(GetAngleRotationServo1());    
             HttpManager.GetInstance().PostMotorCommand("moveMotor1", GetAngleRotationServo1());
         }
-        else if(servo == "servo2")
+        else if (servo == "servo2")
         {
             // MqttManager.instancia.MoveRoboArmServo2(GetAngleRotationServo2());
             HttpManager.GetInstance().PostMotorCommand("moveMotor2", GetAngleRotationServo2());
         }
-        else if(servo == "servo3")
+        else if (servo == "servo3")
         {
             // MqttManager.instancia.MoveRoboArmServo3(GetAngleRotationServo3());
             HttpManager.GetInstance().PostMotorCommand("moveMotor3", GetAngleRotationServo3());
         }
-        else if(servo == "servo4")
+        else if (servo == "servo4")
         {
             // MqttManager.instancia.MoveRoboArmServo4(GetAngleRotationServo4());
             HttpManager.GetInstance().PostMotorCommand("moveMotor4", GetAngleRotationServo4());
@@ -266,9 +272,9 @@ public class Roboarm : MonoBehaviour
 
     private void TravaServo1()
     {
-        if(_roboarmServo1.localEulerAngles.x < 350)  // max 130
+        if (_roboarmServo1.localEulerAngles.x < 350)  // max 130
         {
-            if(_roboarmServo1.localEulerAngles.x > 180 && _roboarmServo1.localEulerAngles.x < 350)
+            if (_roboarmServo1.localEulerAngles.x > 180 && _roboarmServo1.localEulerAngles.x < 350)
                 _roboarmServo1.localEulerAngles = new Vector3(350, 0, 0);
             else if (_roboarmServo1.localEulerAngles.x < 90 && _roboarmServo1.localEulerAngles.y != 0)
                 _roboarmServo1.localEulerAngles = new Vector3(90, 0, 0);
@@ -277,7 +283,7 @@ public class Roboarm : MonoBehaviour
 
     private void TravaServo2()
     {
-        if(_roboarmServo2.localEulerAngles.z < 280 && _roboarmServo2.localEulerAngles.z > 0)
+        if (_roboarmServo2.localEulerAngles.z < 280 && _roboarmServo2.localEulerAngles.z > 0)
         {
             _roboarmServo2.localEulerAngles = _roboarmServo2.localEulerAngles.z > 180 ? new Vector3(0, 0, 280) : new Vector3(0, 0, 0);
         }
@@ -285,9 +291,9 @@ public class Roboarm : MonoBehaviour
 
     private void TravaServo3()
     {
-        if(_roboarmServo3.localEulerAngles.y > 90)
+        if (_roboarmServo3.localEulerAngles.y > 90)
         {
-            if(_roboarmServo3.localEulerAngles.y > 180 && _roboarmServo3.localEulerAngles.y < 270)
+            if (_roboarmServo3.localEulerAngles.y > 180 && _roboarmServo3.localEulerAngles.y < 270)
                 _roboarmServo3.localEulerAngles = new Vector3(0, 270, 0);
             else if (_roboarmServo3.localEulerAngles.y < 180)
                 _roboarmServo3.localEulerAngles = new Vector3(0, 90, 0);
@@ -296,9 +302,9 @@ public class Roboarm : MonoBehaviour
 
     private void TravaServo4()
     {
-        if(_roboarmServo4.localEulerAngles.x > 56)
+        if (_roboarmServo4.localEulerAngles.x > 56)
         {
-            if(_roboarmServo4.localEulerAngles.x > 180 && _roboarmServo4.localEulerAngles.x < 275)
+            if (_roboarmServo4.localEulerAngles.x > 180 && _roboarmServo4.localEulerAngles.x < 275)
                 _roboarmServo4.localEulerAngles = new Vector3(275, 0, 0);
             else if (_roboarmServo4.localEulerAngles.x < 180)
                 _roboarmServo4.localEulerAngles = new Vector3(56, 0, 0);
@@ -309,9 +315,9 @@ public class Roboarm : MonoBehaviour
     {
         yield return new WaitForSeconds(TEMPO_TIMER);
         // Seu código aqui
-        
+
 
         yield return TimerRequisicoes();
     }
-    
+
 }
