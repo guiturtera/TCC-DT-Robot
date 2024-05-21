@@ -107,7 +107,6 @@ class RoboServo : public VarSpeedServo {
 #define ID_MQTT "fiware"
 
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
-IPAddress ip(192, 168, 0, 51);
 IPAddress server(34, 201, 54, 193);
 
 EthernetClient ethClient;
@@ -134,7 +133,6 @@ Joystick controls[] = { Joystick(A1, A0), Joystick(A3, A2)};
 //-------------------------------------------------------------
 //-------------------------Protótipos--------------------------
 void moves(int servoId, int angle, bool shouldWait = false);
-int  angleCorrection(int servoId, int angle);
 void sendAngleMQTT(int servoId, int angle);
 void moveRoboArm(int i, int angle, bool shouldWait);
 //-------------------------------------------------------------
@@ -209,12 +207,10 @@ void moveRoboArm(int i, int angle, bool shouldWait)
   current_motor = i;
   current_angle = angle;
   servos[i].write(angle, shouldWait);
-  mqttStatusThread.enabled = true;
+  sendAngleConfirm();
 }
 
 void moves(int servoId, int angle, bool shouldWait = false) {
-  
-  //angle = angleCorrection(servoId, angle);
   sendAngleMQTT(servoId, angle);
   moveRoboArm(servoId, angle, shouldWait);
 }
@@ -229,29 +225,6 @@ void movesPredefinition() {
   moves(3, 150, true); // altura para 150
   moves(2, 90, true); // base para 90
   moves(0, 0, true); // extensao para 0
-}
-
-#define CORRECTION_A -0.75
-#define CORRECTION_B 135
-
-int angleCorrection(int servoId, int angle) {
-  int min_angle = servos[servoId].getMin();
-  int max_angle = servos[servoId].getMax();
-
-  if (servoId == Motor::Height) {
-    min_angle = servos[Motor::Reach].read() * CORRECTION_A + CORRECTION_B;
-  }
-
-  if (servoId == Motor::Reach) {
-    min_angle = (servos[Motor::Height].read() - CORRECTION_B) / CORRECTION_A;
-  }
-
-  if (angle < min_angle)
-    angle = min_angle;
-  else if (angle > max_angle)
-    angle = max_angle;
-
-  return angle;
 }
 
 void attachment() {
@@ -303,7 +276,7 @@ void command(String c) {
     int servoId = c.substring(0, 1).toInt();
     int angle = c.substring(2).toInt();
 
-    moves((servoId - 1), angle);
+    moves((servoId - 1), angle, true);
   }else if(c.equalsIgnoreCase("a")){
     movesPredefinition();
   } else {
@@ -324,7 +297,7 @@ void setup() {
 
   attachment();
 
-  Ethernet.begin(mac, ip);
+  Ethernet.begin(mac);
   delay(1500);
 
   client.setServer(server, 1883);
@@ -338,9 +311,9 @@ void setup() {
   mqttReadThread.onRun(readMQTT);
   mqttReadThread.setInterval(1000);
 
-  mqttStatusThread.onRun(sendAngleConfirm);
-  mqttStatusThread.setInterval(500);
-  mqttStatusThread.enabled = false;
+  // mqttStatusThread.onRun(sendAngleConfirm);
+  // mqttStatusThread.setInterval(500);
+  // mqttStatusThread.enabled = false;
 
   //joystickControl1.onRun(processJoystickRight);
   //joystickControl1.setInterval(50);
@@ -350,7 +323,7 @@ void setup() {
 
   controller.add(&mqttLoopThread);
   controller.add(&mqttReadThread);
-  controller.add(&mqttStatusThread);
+  // controller.add(&mqttStatusThread);
   //controller.add(&joystickControl1);
   //controller.add(&joystickControl2);
 }
