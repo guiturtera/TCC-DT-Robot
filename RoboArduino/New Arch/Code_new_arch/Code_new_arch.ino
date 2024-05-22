@@ -315,17 +315,17 @@ void setup() {
   // mqttStatusThread.setInterval(500);
   // mqttStatusThread.enabled = false;
 
-  //joystickControl1.onRun(processJoystickRight);
-  //joystickControl1.setInterval(50);
+  joystickControl1.onRun(processJoystickRight);
+  joystickControl1.setInterval(50);
 
-  //joystickControl2.onRun(processJoystickLeft);
-  //joystickControl2.setInterval(50);
+  joystickControl2.onRun(processJoystickLeft);
+  joystickControl2.setInterval(50);
 
   controller.add(&mqttLoopThread);
   controller.add(&mqttReadThread);
   // controller.add(&mqttStatusThread);
-  //controller.add(&joystickControl1);
-  //controller.add(&joystickControl2);
+  controller.add(&joystickControl1);
+  controller.add(&joystickControl2);
 }
 
 void loop() {
