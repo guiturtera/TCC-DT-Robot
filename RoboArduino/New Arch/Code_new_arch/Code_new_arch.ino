@@ -103,7 +103,6 @@ class RoboServo : public VarSpeedServo {
 
 #define TOPIC_SUB "/TEF/DeviceRoboArm001/cmd"
 #define TOPIC_PUB_ATTRS "/TEF/DeviceRoboArm001/attrs"
-#define TOPIC_PUB_EXE "/TEF/DeviceRoboArm001/cmdexe"
 #define ID_MQTT "fiware"
 
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
@@ -144,14 +143,23 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
   memcpy(message, payload, length);
   message[length] = '\0';
 
-  uint8_t index = String(message).indexOf('|');
-  Serial.println(String(message));
+  String msgStr = String(message);
 
-  int servoId = String(message).substring((index - 1), index).toInt();
-  int angle = String(message).substring(index + 1).toInt();
+  int firstIndex = msgStr.indexOf('|');
+  int secondIndex = msgStr.indexOf('|', firstIndex + 1);
+  int thirdIndex = msgStr.indexOf('|', secondIndex + 1);
 
-  moves((servoId - 1), angle);
+  int servoId = msgStr.substring(firstIndex - 1, firstIndex).toInt();
+  int angle = msgStr.substring(firstIndex + 1, secondIndex).toInt();
+  String device_modified = msgStr.substring(thirdIndex + 1);
 
+  Serial.println("Servo ID: " + String(servoId));
+  Serial.println("Angle: " + String(angle));
+  Serial.println("Device Modified: " + device_modified);
+
+  if (device_modified != "real") {
+      moves(servoId - 1, angle);
+  }
 }
 
 void readMQTT()
@@ -176,7 +184,7 @@ void reconnectMQTT()
   while (!client.connected())
   {
     Serial.println("* Tentando se conectar ao Broker MQTT: ");
-    if (client.connect(ID_MQTT))
+    if (client.connect(ID_MQTT));
     {
       Serial.println("Conectado com sucesso ao broker MQTT!");
       client.subscribe(TOPIC_SUB);
@@ -190,14 +198,6 @@ void reconnectMQTT()
   }
 }
 
-void sendAngleConfirm() {
-    if (servos[current_motor].read() == current_angle) {
-      client.publish(TOPIC_PUB_EXE, ("DeviceRoboArm001@moveMotor" + String(current_motor + 1) + "|Succeeded:" + String(current_angle)).c_str());
-    } else {
-      client.publish(TOPIC_PUB_EXE, ("DeviceRoboArm001@moveMotor" + String(current_motor + 1) + "|Failed:" + String(current_angle)).c_str());
-    }
-}
-
 void sendAngleMQTT(int servoId, int angle) {
   client.publish(TOPIC_PUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle)).c_str());
 }
@@ -207,7 +207,6 @@ void moveRoboArm(int i, int angle, bool shouldWait)
   current_motor = i;
   current_angle = angle;
   servos[i].write(angle, shouldWait);
-  sendAngleConfirm();
 }
 
 void moves(int servoId, int angle, bool shouldWait = false) {
@@ -311,7 +310,6 @@ void setup() {
   mqttReadThread.onRun(readMQTT);
   mqttReadThread.setInterval(1000);
 
-  // mqttStatusThread.onRun(sendAngleConfirm);
   // mqttStatusThread.setInterval(500);
   // mqttStatusThread.enabled = false;
 
