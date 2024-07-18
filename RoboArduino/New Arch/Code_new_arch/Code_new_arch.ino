@@ -310,9 +310,6 @@ void setup() {
   mqttReadThread.onRun(readMQTT);
   mqttReadThread.setInterval(1000);
 
-  // mqttStatusThread.setInterval(500);
-  // mqttStatusThread.enabled = false;
-
   joystickControl1.onRun(processJoystickRight);
   joystickControl1.setInterval(50);
 
@@ -321,7 +318,6 @@ void setup() {
 
   controller.add(&mqttLoopThread);
   controller.add(&mqttReadThread);
-  // controller.add(&mqttStatusThread);
   controller.add(&joystickControl1);
   controller.add(&joystickControl2);
 }
