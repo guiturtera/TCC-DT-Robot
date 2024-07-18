@@ -17,7 +17,7 @@ public class MqttManager : MonoBehaviour
 
     private MqttClient client;
 
-    public string brokerIpAddress = "52.149.214.24";
+    public string brokerIpAddress = "34.201.54.193";
     public int brokerPort = 1883;
     public string clientId = "UnityClient";
     public string subscribeTopic = "/TEF/DeviceRoboArm001/cmd";
