@@ -43,77 +43,49 @@ public class MqttManager : MonoBehaviour
 
     private void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
     {
-        string jsonString = Encoding.UTF8.GetString(e.Message);
+        string ultralightString = Encoding.UTF8.GetString(e.Message);
 
-        Debug.Log("jsonString => "+jsonString);
+        Debug.Log("ultralightString => " + ultralightString);
 
-        RootObject obj = JsonUtility.FromJson<RootObject>(jsonString);
-        
-        // A partir deste ponto, você pode acessar os dados desserializados usando obj.subscriptionId, obj.data, etc.
-        
-        // Determinando qual motor foi enviado e seu valor
-        if (obj.data != null && obj.data.Length > 0)
+        string[] data = ultralightString.Split("|");
+        string motor = data[0], device = data[3];
+
+        if (device != "virtual")
+            return;
+
+        float angle = float.Parse(data[1]);
+
+        UnityMainThreadDispatcher.Instance().Enqueue(() =>
         {
-            Data motorData = obj.data[0];
-
-            if (motorData.lastDevice == "VirtualRoboArm") return;
-
-            UnityMainThreadDispatcher.Instance().Enqueue(() => {
-                // Operações que na thread principal
-                if (!float.IsNaN(motorData.motor1))
-                {
-                    Debug.Log("Motor 1 foi enviado com valor: " + motorData.motor1);
-                    Roboarm.instancia.SetAngleRotationServo1(motorData.motor1);
-                }
-                else if (!float.IsNaN(motorData.motor2))
-                {
-                    Debug.Log("Motor 2 foi enviado com valor: " + motorData.motor2);
-                    Roboarm.instancia.SetAngleRotationServo2(motorData.motor2);
-                }
-                else if (!float.IsNaN(motorData.motor3))
-                {
-                    Debug.Log("Motor 3 foi enviado com valor: " + motorData.motor3);
-                    Roboarm.instancia.SetAngleRotationServo3(motorData.motor3);
-                }
-                else if (!float.IsNaN(motorData.motor4))
-                {
-                    Debug.Log("Motor 4 foi enviado com valor: " + motorData.motor4);
-                    Roboarm.instancia.SetAngleRotationServo4(motorData.motor4);
-                }
-                else
-                {
-                    Debug.Log("Nenhum motor foi enviado no JSON.");
-                }
-            });
-        }
-        else
-        {
-            Debug.Log("Nenhum dado foi recebido no JSON.");
-        }       
+            switch (motor) 
+            {
+                case "mt1":
+                    Debug.Log("Motor 1 foi enviado com valor: " + angle);
+                    Roboarm.instancia.SetAngleRotationServo1(angle);
+                    return;
+                case "mt2":
+                    Debug.Log("Motor 2 foi enviado com valor: " + angle);
+                    Roboarm.instancia.SetAngleRotationServo2(angle);
+                    return;
+                case "mt3":
+                    Debug.Log("Motor 3 foi enviado com valor: " + angle);
+                    Roboarm.instancia.SetAngleRotationServo3(angle);
+                    return;
+                case "mt4":
+                    Debug.Log("Motor 4 foi enviado com valor: " + angle);
+                    Roboarm.instancia.SetAngleRotationServo4(angle);
+                    return;
+                default:
+                    Debug.Log("Nenhum movimento foi enviado.");
+                    return;
+            }    
+        });
     }
 
-    public void MoveRoboArmServo1(float motor1Angle)
-    {     
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes("ld|VirtualRoboArm"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"mt1|{(int)motor1Angle}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-    }
-
-    public void MoveRoboArmServo2(float motor2Angle)
-    {     
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes("ld|VirtualRoboArm"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"mt2|{(int)motor2Angle}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-    }
-
-    public void MoveRoboArmServo3(float motor3Angle)
-    {     
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes("ld|VirtualRoboArm"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"mt3|{(int)motor3Angle}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-    }
-
-    public void MoveRoboArmServo4(float motor4Angle)
-    {     
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes("ld|VirtualRoboArm"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"mt4|{(int)motor4Angle}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
+    public void NotifyMovement(string motorId, float angle)
+    {
+        Debug.Log($"Notificando movimento do {motorId} para o ângulo {(int)angle}.");
+        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|real"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
     }
     
     private void OnDestroy()
