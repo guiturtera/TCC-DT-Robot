@@ -199,7 +199,8 @@ void reconnectMQTT()
 }
 
 void sendAngleMQTT(int servoId, int angle) {
-  client.publish(TOPIC_PUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle)).c_str());
+  //example: mt1|120|d|real
+  client.publish(TOPIC_PUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real").c_str());
 }
 
 void moveRoboArm(int i, int angle, bool shouldWait)
