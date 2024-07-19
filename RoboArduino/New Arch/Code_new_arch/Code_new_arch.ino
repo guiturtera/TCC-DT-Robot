@@ -101,8 +101,8 @@ class RoboServo : public VarSpeedServo {
 
 };
 
-#define TOPIC_SUB "/TEF/DeviceRoboArm001/cmd"
-#define TOPIC_PUB_ATTRS "/TEF/DeviceRoboArm001/attrs"
+#define TOPIC_SUB "/ROB/DeviceRoboArm001/cmd"
+#define TOPIC_PUB_ATTRS "/ROB/DeviceRoboArm001/attrs"
 #define ID_MQTT "fiware"
 
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
