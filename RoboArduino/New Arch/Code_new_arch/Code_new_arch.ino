@@ -102,7 +102,7 @@ class RoboServo : public VarSpeedServo {
 };
 
 #define TOPIC_SUB "/TEF/DeviceRoboArm001/cmd"
-#define TOPIC_PUB_ATTRS "/TEF/DeviceRoboArm001/attrs"
+#define TOPIC_PUB_SUB_ATTRS "/TEF/DeviceRoboArm001/attrs"
 #define ID_MQTT "fiware"
 
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
@@ -188,6 +188,7 @@ void reconnectMQTT()
     {
       Serial.println("Conectado com sucesso ao broker MQTT!");
       client.subscribe(TOPIC_SUB);
+      client.subscribe(TOPIC_PUB_SUB_ATTRS);
     }
     else
     {
@@ -200,7 +201,7 @@ void reconnectMQTT()
 
 void sendAngleMQTT(int servoId, int angle) {
   //example: mt1|120|d|real
-  client.publish(TOPIC_PUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real").c_str());
+  client.publish(TOPIC_PUB_SUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real").c_str());
 }
 
 void moveRoboArm(int i, int angle, bool shouldWait)
@@ -312,10 +313,10 @@ void setup() {
   mqttReadThread.setInterval(1000);
 
   joystickControl1.onRun(processJoystickRight);
-  joystickControl1.setInterval(50);
+  joystickControl1.setInterval(20);
 
   joystickControl2.onRun(processJoystickLeft);
-  joystickControl2.setInterval(50);
+  joystickControl2.setInterval(20);
 
   controller.add(&mqttLoopThread);
   controller.add(&mqttReadThread);
