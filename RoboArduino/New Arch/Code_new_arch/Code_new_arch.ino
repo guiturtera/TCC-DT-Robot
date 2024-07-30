@@ -197,8 +197,6 @@ void moves(int servoId, int angle, bool shouldWait = false) {
   moveRoboArm(servoId, angle, shouldWait);
 }
 
-
-
 void attachment() {
   int defaults[] { 0, 180, 90, 150};
   for (int i = 0; i <= 3; i++) {
@@ -223,7 +221,6 @@ void processJoystick(Joystick *control, Motor mt1, Motor mt2){
     moves(mt2, servos[mt2].read() + SERVO_STEP);
   }
 }
-
 
 void processJoystickRight() {
   processJoystick(&controls[RIGHT], Motor::Base, Motor::Height);
