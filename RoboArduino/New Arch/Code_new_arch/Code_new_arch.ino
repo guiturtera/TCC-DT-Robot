@@ -2,8 +2,19 @@
 #include <Ethernet.h>
 #include <PubSubClient.h>
 #include <ThreadController.h>
+#include <RTClib.h>
+#include <NTPClient.h>
 #include <SPI.h>
 #include <Wire.h>
+
+#define TOPIC_SUB "/TEF/DeviceRoboArm001/cmd"
+#define TOPIC_PUB_SUB_ATTRS "/TEF/DeviceRoboArm001/attrs"
+#define ID_MQTT "fiware"
+#define SERVO_STEP 2
+#define LEFT 0
+#define RIGHT 1
+#define MAX 180
+#define MIN 0
 
 class Joystick {
   private:
@@ -30,93 +41,56 @@ class Joystick {
       return get(&_pinY);
     }
 
-    int isMovingRight(void) {
-      if (getY() < 200) {
-        return 1;
-      }
-
-      return 0;
-    }
-
-    int isMovingLeft(void) {
-      if (getY() > 900) {
-        return 1;
-      }
-
-      return 0;
-    }
-
-    int isMovingBottom(void) {
-      if (getX() < 200) {
-        return 1;
-      }
-
-      return 0;
-    }
-
-    int isMovingTop(void) {
-      if (getX() > 900) {
-        return 1;
-      }
-
-      return 0;
-    }
+    bool isMovingRight() const { return getY() < 200; }
+    bool isMovingLeft() const { return getY() > 900; }
+    bool isMovingBottom() const { return getX() < 200; }
+    bool isMovingTop() const { return getX() > 900; }
 
 };
 
+
 class RoboServo : public VarSpeedServo {
   private:
-    int _limits[2];
     int _pin;
 
 
   public:
     RoboServo(int pin) : VarSpeedServo() {
-      _limits[0] = 0;
-      _limits[1] = 180;
       _pin = pin;
     }
 
     uint8_t attach(int defValue) {
       VarSpeedServo::write(defValue, 30);
-      uint8_t res = VarSpeedServo::attach(_pin);
-      return res;
+      return VarSpeedServo::attach(_pin);
     }
 
     void write(int value, bool shouldWait = false) {
-      if (value < _limits[0])
-        value = _limits[0];
-      if (value > _limits[1])
-        value = _limits[1];
-
+      value = constrain(value, MIN, MAX);
       VarSpeedServo::write(value, 30, shouldWait);
     }
-
-    int getMin(void) {
-      return _limits[0];
-    }
-
-    int getMax(void) {
-      return _limits[1];
-    }
-
 };
 
-#define TOPIC_SUB "/TEF/DeviceRoboArm001/cmd"
-#define TOPIC_PUB_SUB_ATTRS "/TEF/DeviceRoboArm001/attrs"
-#define ID_MQTT "fiware"
+
 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
+IPAddress server(34, 201, 54, 193);
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
+
+const long utcOffsetInSeconds = -3 * 3600; // Horário de Brasília (UTC-3)
+
+EthernetUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "a.ntp.br", utcOffsetInSeconds);
+RTC_DS3231 rtc;
 
 ThreadController controller = ThreadController();
 
 enum Motor { Height, Claw, Base, Reach};
 RoboServo servos[] =  { RoboServo(2) , RoboServo(7) , RoboServo(8) , RoboServo(4) };
+String t1;
 
-#define SERVO_STEP 2
-#define LEFT 0
-#define RIGHT 1
+
+
 
 Joystick controls[] = { Joystick(A1, A0), Joystick(A3, A2)};
 
@@ -142,9 +116,11 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
 
   int servoId = msgStr.substring(firstIndex - 1, firstIndex).toInt();
   int angle = msgStr.substring(firstIndex + 1, secondIndex).toInt();
-  String device_modified = msgStr.substring(thirdIndex + 1);
+  String device_modified = msgStr.substring((thirdIndex + 1),(thirdIndex + 5));
 
-  if (device_modified != "real") {
+  
+  if (device_modified == "virt") {
+      t1 = getRTCTimestamp();
       moves(servoId - 1, angle);
   }
 }
@@ -154,7 +130,6 @@ void mqttLoop()
     client.loop();
 }
 
-// Função principal de execução MQTT
 void reconnect()
 {
   if (!client.connected())
@@ -176,15 +151,38 @@ void reconnectMQTT()
     }
     else
     {
-      Serial.println("1");
+      Serial.println(client.state());
       delay(2000);
     }
   }
 }
 
+void setupRTC() {
+  if (!rtc.begin()) {
+    Serial.println(F("Não foi possível encontrar o RTC"));
+    while (true);
+  }
+
+  if (rtc.lostPower()) {
+    Serial.println(F("RTC perdeu energia, ajustando a hora!"));
+    timeClient.update();
+    rtc.adjust(DateTime(timeClient.getEpochTime()));
+  }
+}
+
+String getRTCTimestamp() {
+  DateTime now = rtc.now();
+  char timestamp[24];
+  sprintf(timestamp, "%02d-%02d-%02d %02d:%02d:%02d.%03d", 
+          now.year(), now.month(), now.day(),
+          now.hour(), now.minute(), now.second(), 
+          (millis() % 1000));
+  return String(timestamp);
+}
+#define MQTT_MAX_PACKET_SIZE 256
 void sendAngleMQTT(int servoId, int angle) {
-  //example: mt1|120|d|real
-  client.publish(TOPIC_PUB_SUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real").c_str());
+  String t2 = getRTCTimestamp();
+  client.publish(TOPIC_PUB_SUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real|t1|" + t1 + "|t2|" + t2).c_str());
 }
 
 void moveRoboArm(int i, int angle, bool shouldWait)
@@ -204,30 +202,30 @@ void attachment() {
   }
 }
 
-void processJoystick(Joystick *control, Motor mt1, Motor mt2){
-  if (control->isMovingRight() == 1) {
+void processJoystick(Joystick &control, Motor mt1, Motor mt2){
+  if (control.isMovingRight()) {
     moves(mt1, servos[mt1].read() - SERVO_STEP);
   }
 
-  if (control->isMovingLeft() == 1) {
+  if (control.isMovingLeft()) {
     moves(mt1, servos[mt1].read() + SERVO_STEP);
   }
 
-  if (control->isMovingBottom() == 1) {
+  if (control.isMovingBottom()) {
     moves(mt2, servos[mt2].read() - SERVO_STEP);
   }
 
-  if (control->isMovingTop() == 1) {
+  if (control.isMovingTop()) {
     moves(mt2, servos[mt2].read() + SERVO_STEP);
   }
 }
 
 void processJoystickRight() {
-  processJoystick(&controls[RIGHT], Motor::Base, Motor::Height);
+  processJoystick(controls[RIGHT], Motor::Base, Motor::Height);
 }
 
 void processJoystickLeft() {
-  processJoystick(&controls[LEFT], Motor::Reach, Motor::Claw);
+  processJoystick(controls[LEFT], Motor::Reach, Motor::Claw);
 }
 
 void setup() {
@@ -236,11 +234,10 @@ void setup() {
 
   attachment();
   
-  byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
   Ethernet.begin(mac);
-  delay(1500);
 
-  IPAddress server(34, 201, 54, 193);
+  timeClient.begin();
+  setupRTC();
   
   client.setServer(server, 1883);
   client.setCallback(mqtt_callback);
@@ -248,8 +245,8 @@ void setup() {
 
   Thread mqttReadThread = Thread();
   Thread mqttLoopThread = Thread();
-  Thread joystickControl1 = Thread();
-  Thread joystickControl2 = Thread();
+  //Thread joystickControl1 = Thread();
+  //Thread joystickControl2 = Thread();
 
   // Inicialização das threads MQTT
   mqttLoopThread.onRun(mqttLoop);
@@ -258,16 +255,16 @@ void setup() {
   mqttReadThread.onRun(reconnect);
   mqttReadThread.setInterval(3015);
 
-  joystickControl1.onRun(processJoystickRight);
-  joystickControl1.setInterval(20);
+  //joystickControl1.onRun(processJoystickRight);
+  //joystickControl1.setInterval(20);
 
-  joystickControl2.onRun(processJoystickLeft);
-  joystickControl2.setInterval(20);
+  //joystickControl2.onRun(processJoystickLeft);
+  //joystickControl2.setInterval(20);
 
   controller.add(&mqttLoopThread);
   controller.add(&mqttReadThread);
-  controller.add(&joystickControl1);
-  controller.add(&joystickControl2);
+  //controller.add(&joystickControl1);
+  //controller.add(&joystickControl2);
 }
 
 void loop() {
