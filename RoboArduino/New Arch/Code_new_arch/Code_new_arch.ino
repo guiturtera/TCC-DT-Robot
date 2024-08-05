@@ -15,39 +15,7 @@
 #define RIGHT 1
 #define MAX 180
 #define MIN 0
-
-class Joystick {
-  private:
-    int _pinX, _pinY;
-
-    int get(int *pin) {
-      return analogRead(*pin);
-    }
-
-  public:
-    Joystick(int pinX, int pinY) {
-      _pinX = pinX;
-      _pinY = pinY;
-      pinMode(_pinX, INPUT);
-      pinMode(_pinY, INPUT);
-
-    }
-
-    int getX(void) {
-      return get(&_pinX);
-    }
-
-    int getY(void) {
-      return get(&_pinY);
-    }
-
-    bool isMovingRight() const { return getY() < 200; }
-    bool isMovingLeft() const { return getY() > 900; }
-    bool isMovingBottom() const { return getX() < 200; }
-    bool isMovingTop() const { return getX() > 900; }
-
-};
-
+#define MQTT_MAX_PACKET_SIZE 256
 
 class RoboServo : public VarSpeedServo {
   private:
@@ -88,11 +56,6 @@ ThreadController controller = ThreadController();
 enum Motor { Height, Claw, Base, Reach};
 RoboServo servos[] =  { RoboServo(2) , RoboServo(7) , RoboServo(8) , RoboServo(4) };
 String t1;
-
-
-
-
-Joystick controls[] = { Joystick(A1, A0), Joystick(A3, A2)};
 
 //-------------------------------------------------------------
 //-------------------------Protótipos--------------------------
@@ -179,7 +142,7 @@ String getRTCTimestamp() {
           (millis() % 1000));
   return String(timestamp);
 }
-#define MQTT_MAX_PACKET_SIZE 256
+
 void sendAngleMQTT(int servoId, int angle) {
   String t2 = getRTCTimestamp();
   client.publish(TOPIC_PUB_SUB_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real|t1|" + t1 + "|t2|" + t2).c_str());
@@ -202,32 +165,6 @@ void attachment() {
   }
 }
 
-void processJoystick(Joystick &control, Motor mt1, Motor mt2){
-  if (control.isMovingRight()) {
-    moves(mt1, servos[mt1].read() - SERVO_STEP);
-  }
-
-  if (control.isMovingLeft()) {
-    moves(mt1, servos[mt1].read() + SERVO_STEP);
-  }
-
-  if (control.isMovingBottom()) {
-    moves(mt2, servos[mt2].read() - SERVO_STEP);
-  }
-
-  if (control.isMovingTop()) {
-    moves(mt2, servos[mt2].read() + SERVO_STEP);
-  }
-}
-
-void processJoystickRight() {
-  processJoystick(controls[RIGHT], Motor::Base, Motor::Height);
-}
-
-void processJoystickLeft() {
-  processJoystick(controls[LEFT], Motor::Reach, Motor::Claw);
-}
-
 void setup() {
   Serial.begin(9600);
   Wire.begin();
@@ -245,8 +182,6 @@ void setup() {
 
   Thread mqttReadThread = Thread();
   Thread mqttLoopThread = Thread();
-  //Thread joystickControl1 = Thread();
-  //Thread joystickControl2 = Thread();
 
   // Inicialização das threads MQTT
   mqttLoopThread.onRun(mqttLoop);
@@ -255,16 +190,8 @@ void setup() {
   mqttReadThread.onRun(reconnect);
   mqttReadThread.setInterval(3015);
 
-  //joystickControl1.onRun(processJoystickRight);
-  //joystickControl1.setInterval(20);
-
-  //joystickControl2.onRun(processJoystickLeft);
-  //joystickControl2.setInterval(20);
-
   controller.add(&mqttLoopThread);
   controller.add(&mqttReadThread);
-  //controller.add(&joystickControl1);
-  //controller.add(&joystickControl2);
 }
 
 void loop() {
