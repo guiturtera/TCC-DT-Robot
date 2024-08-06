@@ -7,6 +7,7 @@
 #include <ThreadController.h>
 #include <ArduinoJson.h>
 #include "Wire.h"          // Inclui a biblioteca Wire para comunicação I2C
+#include <NTPClient.h>
 
 // Configuração da rede
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};   // Endereço MAC do dispositivo
@@ -17,16 +18,21 @@ IPAddress server(52, 149, 214, 24);                    // Endereço IP do servid
 // Configurações MQTT
 const char *BROKER_MQTT = "52.149.214.24";            // URL do broker MQTT
 int BROKER_PORT = 1883;                               // Porta do broker MQTT
-#define TOPICO_SUBSCRIBE "/TEF/DeviceRoboArm001/cmd"   // Tópico de subscrição MQTT
-#define TOPICO_PUBLISH "/TEF/DeviceRoboArm001/attrs"  // Tópico de publicação MQTT
+#define TOPICO_SUBSCRIBE "/TEF/DeviceRoboArm001/metrics"   // Tópico de subscrição MQTT
+#define TOPICO_PUBLISH "/TEF/DeviceRoboArm001/metrics"  // Tópico de publicação MQTT
 #define ID_MQTT "fiware_01"                            // ID único do cliente MQTT
 
 EthernetClient ethClient;                              // Cliente Ethernet para conexão de rede
 PubSubClient client(ethClient);                        // Cliente MQTT
 
+const long utcOffsetInSeconds = -3 * 3600; // Horário de Brasília (UTC-3)
+
+EthernetUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "a.ntp.br", utcOffsetInSeconds);
+
 ThreadController mqttThread = ThreadController();      // Controlador de threads para MQTT
 ThreadController mqttThreadRead = ThreadController();  // Controlador de threads para leitura MQTT
-
+ThreadController moveThread = ThreadController();
 // Declaração dos objetos do Servo Motor
 VarSpeedServo servo1;  
 VarSpeedServo servo2;
@@ -37,23 +43,26 @@ VarSpeedServo servo4;
 void setup()
 {
   // Inicialização dos servo motores
-  servo1.attach(9);
-  servo2.attach(11);
-  servo3.attach(8);
-  servo4.attach(10);
+  // servo1.attach(9);
+  // servo2.attach(11);
+  // servo3.attach(8);
+  // servo4.attach(10);
 
   // Posição inicial dos servo motores
-  servo1.write(90);
-  servo2.write(90);
-  servo3.write(90);
-  servo4.write(90);
-  delay(1000);
-  servo4.detach();
+  // servo1.write(90);
+  // servo2.write(90);
+  // servo3.write(90);
+  // servo4.write(90);
+  // delay(1000);
+  // servo4.detach();
 
   // Inicialização da comunicação serial e Ethernet
   Serial.begin(9600);
-  Ethernet.begin(mac, ip);
+  Ethernet.begin(mac);
   delay(1500);
+
+  timeClient.begin();
+  timeClient.update();
 
   // Configuração do cliente MQTT
   client.setServer(BROKER_MQTT, BROKER_PORT);
@@ -69,6 +78,10 @@ void setup()
   mqttThread.setInterval(1000);
   mqttThread.enabled = true;
 
+  moveThread.onRun(executarMovimentoPredefinido);
+  moveThread.setInterval(10000);
+  moveThread.enabled = true;
+
   // Menu Inicial
   Serial.println("Bem-vindo ao Menu do Controle de Servos!");
   Serial.println("Opções:");
@@ -79,34 +92,36 @@ void setup()
 // Função de callback para mensagens MQTT recebidas
 void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
-  char message[length + 1];
-  memcpy(message, payload, length);
-  message[length] = '\0';
+  String t2 = getTimestamp();
+  client.publish(TOPICO_PUBLISH, ("|d|real|t2|" + t2).c_str());
+  // char message[length + 1];
+  // memcpy(message, payload, length);
+  // message[length] = '\0';
 
-  DynamicJsonDocument jsonDoc(512);
-  deserializeJson(jsonDoc, message);
+  // DynamicJsonDocument jsonDoc(512);
+  // deserializeJson(jsonDoc, message);
 
-  String lastDevice = jsonDoc["data"][0]["lastDevice"];
-  Serial.print("lastDevice: ");
-  Serial.println(lastDevice);
+  // String lastDevice = jsonDoc["data"][0]["lastDevice"];
+  // Serial.print("lastDevice: ");
+  // Serial.println(lastDevice);
 
-  if (lastDevice != "RealRoboArm")
-  {
-    for (int i = 1; i <= 4; ++i)
-    {
-      String motorKey = "motor" + String(i);
-      if (jsonDoc["data"][0].containsKey(motorKey))
-      {
-        int valor = jsonDoc["data"][0][motorKey];
-        Serial.print("Motor: ");
-        Serial.println(motorKey);
-        Serial.print("Valor: ");
-        Serial.println(valor);
-        moveRoboArm(motorKey, valor);
-        break;
-      }
-    }
-  }
+  // if (lastDevice != "RealRoboArm")
+  // {
+  //   for (int i = 1; i <= 4; ++i)
+  //   {
+  //     String motorKey = "motor" + String(i);
+  //     if (jsonDoc["data"][0].containsKey(motorKey))
+  //     {
+  //       int valor = jsonDoc["data"][0][motorKey];
+  //       Serial.print("Motor: ");
+  //       Serial.println(motorKey);
+  //       Serial.print("Valor: ");
+  //       Serial.println(valor);
+  //       moveRoboArm(motorKey, valor);
+  //       break;
+  //     }
+  //   }
+  // }
 }
 
 // Função para reconectar ao broker MQTT em caso de desconexão
@@ -133,23 +148,24 @@ void reconnectMQTT()
 // Função para enviar dados dos servos via MQTT
 void EnviaAngloServosMQTT(int servoId)
 {  
+  String t1 = getTimestamp()
   switch (servoId) 
   {
       case 1:
-        client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
-        client.publish(TOPICO_PUBLISH, ("mt1|" + String(servo1.read())).c_str());
+        //client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
+        client.publish(TOPICO_PUBLISH, ("|d|real|t1|" + t1).c_str());
         break;
       case 2:
-        client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
-        client.publish(TOPICO_PUBLISH, ("mt2|" + String(servo2.read())).c_str());
+        //client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
+        client.publish(TOPICO_PUBLISH, ("|d|real|t1|" + t1).c_str());
         break;
       case 3:
-        client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
-        client.publish(TOPICO_PUBLISH, ("mt3|" + String(servo3.read())).c_str());
+        //client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
+        client.publish(TOPICO_PUBLISH, ("|d|real|t1|" + t1).c_str());
         break;
       case 4:
-        client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
-        client.publish(TOPICO_PUBLISH, ("mt4|" + String(servo4.read())).c_str());
+        //client.publish(TOPICO_PUBLISH, "ld|RealRoboArm");
+        client.publish(TOPICO_PUBLISH, ("|d|real|t1|" + t1).c_str());
         break;
   }  
 
@@ -187,26 +203,26 @@ void moveRoboArm(String servo, int angle)
 {
   if (servo.equals("motor1"))
   {
-    servo1.slowmove(angle, 30);
+    //servo1.slowmove(angle, 30);
     delay(2000);
   }
   else if (servo.equals("motor2"))
   {
-    servo2.slowmove(angle, 30);
+    //servo2.slowmove(angle, 30);
     delay(2000);
   }
   else if (servo.equals("motor3"))
   {
-    servo3.slowmove(angle, 30);
+    //servo3.slowmove(angle, 30);
     delay(2000);
   }
   else if (servo.equals("motor4"))
   {
-    servo4.attach(10);
+    //servo4.attach(10);
     delay(500);
-    servo4.slowmove(angle, 30);
+    //servo4.slowmove(angle, 30);
     delay(1500);
-    servo4.detach();
+    //servo4.detach();
   }
   else
   {
@@ -292,6 +308,21 @@ void processarComando(String comando)
   }
 }
 
+String getTimestamp() {
+  //Obtendo Dados do NTP
+  String formatDate = timeClient.getFormattedTime();
+  unsigned long epochTime = timeClient.getEpochTime();
+  
+  //Lógica para os milisegundos
+  unsigned long elapsedMillis = millis() % 1000; 
+  unsigned long timestampMillis = (epochTime * 1000) + elapsedMillis;
+  unsigned long millisPart = timestampMillis % 1000;
+
+  //formatDate + milisegundos
+  // hh:MM:ss.mmm
+  formatDate = formatDate + "." + String(millisPart);
+  return formatDate;
+}
 
 // Função principal de execução
 void loop()
@@ -299,6 +330,7 @@ void loop()
   // Executa as threads MQTT
   mqttThread.run();  
   mqttThreadRead.run();
+  moveThread.run();
 
   // Lê dados da porta serial e controla os servos correspondentes
   if (Serial.available() > 0) {
