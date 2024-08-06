@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,8 +21,9 @@ public class MqttManager : MonoBehaviour
     public string brokerIpAddress = "34.201.54.193";
     public int brokerPort = 1883;
     public string clientId = "UnityClient";
-    public string subscribeTopic = "/TEF/DeviceRoboArm001/cmd";
+    public string subscribeTopic = "/TEF/DeviceRoboArm001/attrs";
     public string publishTopic = "/TEF/DeviceRoboArm001/attrs";
+    public string metricsTopic = "/TEF/DeviceRoboArm001/metrics";
 
     private void Start()
     {
@@ -44,19 +46,24 @@ public class MqttManager : MonoBehaviour
     private void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
     {
         string ultralightString = Encoding.UTF8.GetString(e.Message);
+        DateTime receiveTime = DateTime.Now;
 
         Debug.Log("ultralightString => " + ultralightString);
 
         string[] data = ultralightString.Split("|");
         string motor = data[0], device = data[3];
 
+
         if (device != "virtual")
             return;
 
+        Debug.Log("1");
         float angle = float.Parse(data[1]);
 
+        Debug.Log("2");
         UnityMainThreadDispatcher.Instance().Enqueue(() =>
         {
+            Debug.Log("3");
             switch (motor) 
             {
                 case "mt1":
@@ -78,8 +85,12 @@ public class MqttManager : MonoBehaviour
                 default:
                     Debug.Log("Nenhum movimento foi enviado.");
                     return;
-            }    
+            }
         });
+
+        ultralightString += $"|t3|{receiveTime.ToString("yyyy-MM-dd HH:MM:ss.fff")}";
+
+        client.Publish(metricsTopic, Encoding.UTF8.GetBytes(ultralightString), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
     }
 
     public void NotifyMovement(string motorId, float angle)
