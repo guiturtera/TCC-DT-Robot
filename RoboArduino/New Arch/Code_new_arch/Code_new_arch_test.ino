@@ -113,6 +113,7 @@ void reconnectMQTT()
     {
       Serial.println("0");
       client.subscribe(TOPIC_ACK);
+      client.subscribe(TOPIC_ATTRS);
     }
     else
     {
