@@ -2,7 +2,6 @@
 #include <Ethernet.h>
 #include <PubSubClient.h>
 #include <ThreadController.h>
-#include <NTPClient.h>
 #include <SPI.h>
 #include <Wire.h>
 
@@ -42,12 +41,7 @@ EthernetClient ethClient;
 PubSubClient client(ethClient);
 IPAddress server(34, 201, 54, 193);
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
-String t1 = "";
-
-const long utcOffsetInSeconds = -3 * 3600; // Horário de Brasília (UTC-3)
-
-EthernetUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.br", utcOffsetInSeconds, 1000);
+unsigned long t1;
 
 ThreadController controller = ThreadController();
 
@@ -65,9 +59,9 @@ void moveRoboArm(int i, int angle, bool shouldWait);
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
-  String t2 = getTimestamp();
+  unsigned long t2 = micros();
   
-  client.publish(TOPIC_METRICS, ("t1|" + t1 + "|t2|" + t2).c_str());
+  client.publish(TOPIC_METRICS, ("t1|" + String(t1) + "|t2|" + String(t2)).c_str());
   
 }
 
@@ -104,26 +98,10 @@ void reconnectMQTT()
 
 
 
-String getTimestamp() {
-  //Obtendo Dados do NTP
-  String formatDate = timeClient.getFormattedTime();
-  unsigned long epochTime = timeClient.getEpochTime();
-  
-  //Lógica para os milisegundos
-  unsigned long elapsedMillis = (millis()) % 1000; 
-  unsigned long timestampMillis = (epochTime * 1000) + elapsedMillis;
-  unsigned long millisPart = timestampMillis % 1000;
-
-  //formatDate + milisegundos
-  // hh:MM:ss.mmm
-  formatDate = formatDate + "." + String(millisPart);
-  return formatDate;
-}
-
 #define MQTT_MAX_PACKET_SIZE 256
 void sendAngleMQTT(int servoId, int angle) {
-  t1 = getTimestamp();
-  client.publish(TOPIC_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real|t1|" + t1).c_str());
+  t1 = micros();
+  client.publish(TOPIC_ATTRS, ("mt" + String(servoId + 1) + "|" + String(angle) + "|d|real|t1|" + String(t1)).c_str());
   
 }
 
@@ -154,9 +132,6 @@ void setup() {
   //attachment();
   
   Ethernet.begin(mac);
-
-  timeClient.begin();
-  timeClient.update();
   
   client.setServer(server, 1883);
   client.setCallback(mqtt_callback);
@@ -184,6 +159,5 @@ void setup() {
 
 
 void loop() {
-  timeClient.update();
   controller.run();
 }
