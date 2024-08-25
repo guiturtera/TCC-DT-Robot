@@ -7,12 +7,15 @@ using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
 using uPLibrary.Networking.M2Mqtt.Exceptions;
 using PimDeWitte.UnityMainThreadDispatcher;
+using PimDeWitte.UnityMainThreadDispatcher.Assets.roboarm.Scripts;
 
 public class MqttManager : MonoBehaviour
 {
+    DateTime networkTime = NtpManager.GetNetworkTime();
     public static MqttManager instancia;
 
-    private void Awake() {
+    private void Awake()
+    {
         instancia = this;
     }
 
@@ -23,7 +26,8 @@ public class MqttManager : MonoBehaviour
     public string clientId = "UnityClient";
     public string subscribeTopic = "/TEF/DeviceRoboArm001/attrs";
     public string publishTopic = "/TEF/DeviceRoboArm001/attrs";
-    public string metricsTopic = "/TEF/DeviceRoboArm001/metrics";
+    public string ackTopic = "/TEF/DeviceRoboArm001/ack";
+    public string metricsTopic = "/TEF/metrics/attrs";
 
     private void Start()
     {
@@ -45,26 +49,29 @@ public class MqttManager : MonoBehaviour
 
     private void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
     {
+        DateTime receiveTime = NtpManager.GetNetworkTime();
         string ultralightString = Encoding.UTF8.GetString(e.Message);
-        DateTime receiveTime = DateTime.Now;
+        /*DateTime receiveTime = DateTime.Now;*/
 
-        Debug.Log("ultralightString => " + ultralightString);
+        /*Debug.Log("ultralightString => " + ultralightString);*/
+
+        // ultralightString += $"|t2|{receiveTime.ToString("HH:mm:ss.fff")}";
+        // Debug.Log("ultralightString => " + ultralightString);
 
         string[] data = ultralightString.Split("|");
-        string motor = data[0], device = data[3];
+        string motor = data[0], device = data[3], t1 = data[5];
 
-
-        if (device != "virtual")
+        Debug.Log("t1 => " + t1);
+        if (device == "virtual")
             return;
+        else
+            StartCoroutine(WaitForAck(this.networkTime.ToString("HH:mm:ss.fff")));
 
-        Debug.Log("1");
         float angle = float.Parse(data[1]);
 
-        Debug.Log("2");
         UnityMainThreadDispatcher.Instance().Enqueue(() =>
         {
-            Debug.Log("3");
-            switch (motor) 
+            switch (motor)
             {
                 case "mt1":
                     Debug.Log("Motor 1 foi enviado com valor: " + angle);
@@ -88,17 +95,59 @@ public class MqttManager : MonoBehaviour
             }
         });
 
-        ultralightString += $"|t3|{receiveTime.ToString("yyyy-MM-dd HH:MM:ss.fff")}";
+        /*ultralightString += $"|t2|{receiveTime.ToString("yyyy-MM-dd HH:mm:ss")}"*/
+        client.Publish(metricsTopic, Encoding.UTF8.GetBytes($"t1|{t1}|t2|{receiveTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
+    }
 
-        client.Publish(metricsTopic, Encoding.UTF8.GetBytes(ultralightString), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
+    // Método para fins de teste, com a ideia de repetir os movimentos consecutivas vezes
+    private void LoopMovement()
+    {
+        for (int i = 0; i <= 30; i++)
+        {
+            NotifyMovement("mt1", 45);
+            NotifyMovement("mt3", 45);
+        }
     }
 
     public void NotifyMovement(string motorId, float angle)
     {
-        Debug.Log($"Notificando movimento do {motorId} para o ângulo {(int)angle}.");
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|real"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
+        Debug.Log($"Notificando movimento do {motorId} para o ângulo {(int)angle} às {this.networkTime.ToString("HH:mm:ss.fff")}.");
+
+        // Publica a mensagem inicial com o t1
+        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|virtual|t1|{this.networkTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
     }
-    
+
+    private IEnumerator WaitForAck(string t1)
+    {
+        bool ackReceived = false;
+        DateTime ackTime = DateTime.MinValue;
+
+        client.MqttMsgPublishReceived += (sender, e) =>
+        {
+            string ackMessage = Encoding.UTF8.GetString(e.Message);
+            if (ackMessage == "ack|d|virtual")
+            {
+                ackReceived = true;
+                ackTime = NtpManager.GetNetworkTime();
+            }
+        };
+
+        while (!ackReceived)
+        {
+            yield return null;
+        }
+
+        if (ackReceived)
+        {
+            /*client.Publish(metricsTopic, Encoding.UTF8.GetBytes($"t1|{t1}|t2|{ackTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);*/
+            Debug.Log($"ACK recebido. Tempo registrado: {ackTime.ToString("HH:mm:ss.fff")}");
+        }
+        else
+        {
+            Debug.LogWarning("Timeout ao aguardar ACK.");
+        }
+    }
+
     private void OnDestroy()
     {
         if (client != null && client.IsConnected)
