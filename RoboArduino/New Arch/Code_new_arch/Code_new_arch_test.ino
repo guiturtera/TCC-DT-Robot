@@ -59,9 +59,35 @@ void moveRoboArm(int i, int angle, bool shouldWait);
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
-  unsigned long t2 = micros();
+  if(strcmp(topic, TOPIC_ATTRS) == 0){
+      char message[length + 1];
+      memcpy(message, payload, length);
+      message[length] = '\0';
+    
+      String msgStr = String(message);
+    
+      int firstIndex = msgStr.indexOf('|');
+      int secondIndex = msgStr.indexOf('|', firstIndex + 1);
+      int thirdIndex = msgStr.indexOf('|', secondIndex + 1);
+    
+      int servoId = msgStr.substring(firstIndex - 1, firstIndex).toInt();
+      int angle = msgStr.substring(firstIndex + 1, secondIndex).toInt();
+      String device_modified = msgStr.substring(thirdIndex + 1);
+    
+      Serial.println("Servo ID: " + String(servoId));
+      Serial.println("Angle: " + String(angle));
+      Serial.println("Device Modified: " + device_modified);
+    
+      if (device_modified != "real") {
+         client.publish(TOPIC_ACK, ("ack|d|real"));
+      }
+    
+  }else{
+    unsigned long t2 = micros();
   
-  client.publish(TOPIC_METRICS, ("t1|" + String(t1) + "|t2|" + String(t2)).c_str());
+    client.publish(TOPIC_METRICS, ("t1|" + String(t1) + "|t2|" + String(t2)).c_str());
+  }
+  
   
 }
 
