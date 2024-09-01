@@ -11,7 +11,7 @@ using PimDeWitte.UnityMainThreadDispatcher.Assets.roboarm.Scripts;
 
 public class MqttManager : MonoBehaviour
 {
-    DateTime networkTime = NtpManager.GetNetworkTime();
+    DateTime networkTime = DateTime.Now;
     public static MqttManager instancia;
 
     private void Awake()
@@ -21,12 +21,12 @@ public class MqttManager : MonoBehaviour
 
     private MqttClient client;
 
-    public string brokerIpAddress = "34.201.54.193";
-    public int brokerPort = 1883;
+    public string brokerIpAddress = "10.5.10.34";
+    public int brokerPort = 8666;
     public string clientId = "UnityClient";
     public string subscribeTopic = "/TEF/DeviceRoboArm001/attrs";
     public string publishTopic = "/TEF/DeviceRoboArm001/attrs";
-    public string ackTopic = "/TEF/DeviceRoboArm001/ack";
+    public string ackTopic = "/TEF/DeviceRoboArm001/attrs/ack";
     public string metricsTopic = "/TEF/metrics/attrs";
 
     private void Start()
@@ -49,7 +49,6 @@ public class MqttManager : MonoBehaviour
 
     private void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
     {
-        DateTime receiveTime = NtpManager.GetNetworkTime();
         string ultralightString = Encoding.UTF8.GetString(e.Message);
         /*DateTime receiveTime = DateTime.Now;*/
 
@@ -64,8 +63,6 @@ public class MqttManager : MonoBehaviour
         Debug.Log("t1 => " + t1);
         if (device == "virtual")
             return;
-        else
-            StartCoroutine(WaitForAck(this.networkTime.ToString("HH:mm:ss.fff")));
 
         float angle = float.Parse(data[1]);
 
@@ -95,18 +92,9 @@ public class MqttManager : MonoBehaviour
             }
         });
 
+        client.Publish(ackTopic, Encoding.UTF8.GetBytes(ultralightString));
         /*ultralightString += $"|t2|{receiveTime.ToString("yyyy-MM-dd HH:mm:ss")}"*/
-        client.Publish(metricsTopic, Encoding.UTF8.GetBytes($"t1|{t1}|t2|{receiveTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-    }
-
-    // Método para fins de teste, com a ideia de repetir os movimentos consecutivas vezes
-    private void LoopMovement()
-    {
-        for (int i = 0; i <= 30; i++)
-        {
-            NotifyMovement("mt1", 45);
-            NotifyMovement("mt3", 45);
-        }
+        /*client.Publish(metricsTopic, Encoding.UTF8.GetBytes($"t1|{t1}|t2|{receiveTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);*/
     }
 
     public void NotifyMovement(string motorId, float angle)
@@ -115,37 +103,6 @@ public class MqttManager : MonoBehaviour
 
         // Publica a mensagem inicial com o t1
         client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|virtual|t1|{this.networkTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
-    }
-
-    private IEnumerator WaitForAck(string t1)
-    {
-        bool ackReceived = false;
-        DateTime ackTime = DateTime.MinValue;
-
-        client.MqttMsgPublishReceived += (sender, e) =>
-        {
-            string ackMessage = Encoding.UTF8.GetString(e.Message);
-            if (ackMessage == "ack|d|virtual")
-            {
-                ackReceived = true;
-                ackTime = NtpManager.GetNetworkTime();
-            }
-        };
-
-        while (!ackReceived)
-        {
-            yield return null;
-        }
-
-        if (ackReceived)
-        {
-            /*client.Publish(metricsTopic, Encoding.UTF8.GetBytes($"t1|{t1}|t2|{ackTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);*/
-            Debug.Log($"ACK recebido. Tempo registrado: {ackTime.ToString("HH:mm:ss.fff")}");
-        }
-        else
-        {
-            Debug.LogWarning("Timeout ao aguardar ACK.");
-        }
     }
 
     private void OnDestroy()
