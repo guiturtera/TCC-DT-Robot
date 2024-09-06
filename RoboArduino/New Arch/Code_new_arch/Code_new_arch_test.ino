@@ -138,6 +138,7 @@ void loop() {
   client.loop();
 
   if(isRun == 0){
+    this.isRun = 1;
     movePredefinition();
   }
 }
