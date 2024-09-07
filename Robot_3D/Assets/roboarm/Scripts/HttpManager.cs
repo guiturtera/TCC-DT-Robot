@@ -32,7 +32,7 @@ namespace PimDeWitte.UnityMainThreadDispatcher.Assets.roboarm.Scripts
 
             Debug.Log($"Sending {jsonData}");
 
-            PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
+            //PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
             UnityWebRequest webRequest = UnityWebRequest.Put(_url, jsonData);
             webRequest.method = "PATCH";
             webRequest.SetRequestHeader("Content-Type", "application/json");
