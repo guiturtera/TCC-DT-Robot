@@ -1,12 +1,11 @@
 #include <VarSpeedServo.h>
 #include <Ethernet.h>
 #include <PubSubClient.h>
-#include <ThreadController.h>
 #include <SPI.h>
 #include <Wire.h>
 
 #define TOPIC_ATTRS "/TEF/DeviceRoboArm001/attrs"
-#define TOPIC_ACK "/TEF/DeviceRoboArm001/ack"
+#define TOPIC_ACK "/TEF/DeviceRoboArm001/attrs/ack"
 #define TOPIC_METRICS "/TEF/metrics/attrs"
 #define ID_MQTT "fiware"
 #define SERVO_STEP 2
@@ -39,15 +38,12 @@ class RoboServo : public VarSpeedServo {
 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
-IPAddress server(34, 201, 54, 193);
+IPAddress server(34,201,54,193);
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
 unsigned long t1;
 
-ThreadController controller = ThreadController();
-
 enum Motor { Height, Claw, Base, Reach};
 RoboServo servos[] =  { RoboServo(2) , RoboServo(7) , RoboServo(8) , RoboServo(4) };
-
 
 //-------------------------------------------------------------
 //-------------------------Protótipos--------------------------
@@ -59,49 +55,14 @@ void moveRoboArm(int i, int angle, bool shouldWait);
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
-  if(strcmp(topic, TOPIC_ATTRS) == 0){
-      char message[length + 1];
-      memcpy(message, payload, length);
-      message[length] = '\0';
-    
-      String msgStr = String(message);
-    
-      int firstIndex = msgStr.indexOf('|');
-      int secondIndex = msgStr.indexOf('|', firstIndex + 1);
-      int thirdIndex = msgStr.indexOf('|', secondIndex + 1);
-    
-      int servoId = msgStr.substring(firstIndex - 1, firstIndex).toInt();
-      int angle = msgStr.substring(firstIndex + 1, secondIndex).toInt();
-      String device_modified = msgStr.substring(thirdIndex + 1);
-    
-      Serial.println("Servo ID: " + String(servoId));
-      Serial.println("Angle: " + String(angle));
-      Serial.println("Device Modified: " + device_modified);
-    
-      if (device_modified != "real") {
-         client.publish(TOPIC_ACK, ("ack|d|real"));
-      }
-    
-  }else{
+  
     unsigned long t2 = micros();
-  
-    client.publish(TOPIC_METRICS, ("t1|" + String(t1) + "|t2|" + String(t2)).c_str());
-  }
-  
-  
-}
-
-void mqttLoop()
-{
-    client.loop();
-}
-
-void reconnect()
-{
-  if (!client.connected())
-  {
-    reconnectMQTT();
-  }
+    if(client.publish(TOPIC_METRICS, ("t1|" + String(t1) + "_" + String(t2)).c_str())){
+      delay(500);
+      movePredefinition();
+    }
+    
+    
 }
 
 void reconnectMQTT()
@@ -113,10 +74,11 @@ void reconnectMQTT()
     {
       Serial.println("0");
       client.subscribe(TOPIC_ACK);
-      client.subscribe(TOPIC_ATTRS);
+      //client.subscribe(TOPIC_ATTRS);
     }
     else
     {
+      
       Serial.println(client.state());
       delay(2000);
     }
@@ -162,29 +124,21 @@ void setup() {
   
   client.setServer(server, 1883);
   client.setCallback(mqtt_callback);
-  client.setKeepAlive(6);
-
-  Thread mqttReadThread = Thread();
-  Thread mqttLoopThread = Thread();
-  Thread moveThread = Thread();
-
-  // Inicialização das threads MQTT
-  mqttLoopThread.onRun(mqttLoop);
-  mqttLoopThread.setInterval(1005);
-
-  mqttReadThread.onRun(reconnect);
-  mqttReadThread.setInterval(3015);
-
-  moveThread.onRun(movePredefinition);
-  moveThread.setInterval(5000);
-
-  controller.add(&mqttLoopThread);
-  controller.add(&mqttReadThread);
-  controller.add(&moveThread);
 }
 
-
+uint8_t isRun = 0;
 
 void loop() {
-  controller.run();
+  
+
+  if (!client.connected())
+  {
+    reconnectMQTT();
+  }
+  client.loop();
+
+  if(isRun == 0){
+    isRun = 1;
+    movePredefinition();
+  }
 }
