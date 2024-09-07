@@ -9,3 +9,8 @@
 /.vs/TCC PROJ/v17/DocumentLayout.json
 /.vs/TCC PROJ/v17/.wsuo
 /Robot_3D/obj/Debug/PimDeWitte.UnityMainThreadDispatcher.csproj.AssemblyReference.cache
+/Robot_3D/build_cloud.rar
+/Robot_3D/build_edge.rar
+/Robot_3D/build_cloud
+/Robot_3D/build_edge
+/Robot_3D/Assets/roboarm/Scripts/NtpManager.cs.meta
