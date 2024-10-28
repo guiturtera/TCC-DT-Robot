@@ -27,8 +27,6 @@ public class MqttManager : MonoBehaviour
     public string clientId = "UnityClient";
     public string subscribeTopic = "/TEF/DeviceRoboArm001/attrs";
     public string publishTopic = "/TEF/DeviceRoboArm001/attrs";
-    public string ackTopic = "/TEF/DeviceRoboArm001/attrs/ack";
-    public string metricsTopic = "/TEF/metrics/attrs";
 
     private void Start()
     {
@@ -51,17 +49,10 @@ public class MqttManager : MonoBehaviour
     private void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
     {
         string ultralightString = Encoding.UTF8.GetString(e.Message);
-        /*DateTime receiveTime = DateTime.Now;*/
-
-        /*Debug.Log("ultralightString => " + ultralightString);*/
-
-        // ultralightString += $"|t2|{receiveTime.ToString("HH:mm:ss.fff")}";
-        // Debug.Log("ultralightString => " + ultralightString);
 
         string[] data = ultralightString.Split("|");
         string motor = data[0], device = data[3], t1 = data[5];
 
-        Debug.Log("t1 => " + t1);
         if (device == "virtual")
             return;
 
@@ -93,17 +84,13 @@ public class MqttManager : MonoBehaviour
             }
         });
 
-        client.Publish(ackTopic, Encoding.UTF8.GetBytes(ultralightString));
-        /*ultralightString += $"|t2|{receiveTime.ToString("yyyy-MM-dd HH:mm:ss")}"*/
-        /*client.Publish(metricsTopic, Encoding.UTF8.GetBytes($"t1|{t1}|t2|{receiveTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);*/
     }
 
     public void NotifyMovement(string motorId, float angle)
     {
         Debug.Log($"Notificando movimento do {motorId} para o ângulo {(int)angle} às {this.networkTime.ToString("HH:mm:ss.fff")}.");
 
-        // Publica a mensagem inicial com o t1
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|virtual|t1|{this.networkTime.ToString("HH:mm:ss.fff")}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
+        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|virtual}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
     }
 
     private void OnDestroy()
