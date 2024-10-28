@@ -23,7 +23,6 @@ public class MqttManager : MonoBehaviour
 
     public string brokerIpAddress = "44.201.194.139"; //Ip Núvem
     //public string brokerIpAddress = "34.201.54.193"; //Ip Edge
-    public int brokerPort = 1026;
     public string clientId = "UnityClient";
     public string subscribeTopic = "/TEF/DeviceRoboArm001/attrs";
     public string publishTopic = "/TEF/DeviceRoboArm001/attrs";
@@ -51,8 +50,9 @@ public class MqttManager : MonoBehaviour
         string ultralightString = Encoding.UTF8.GetString(e.Message);
 
         string[] data = ultralightString.Split("|");
-        string motor = data[0], device = data[3], t1 = data[5];
-
+        string motor = data[0], device = data[3];
+        Debug.Log("Motor => " + motor);
+        Debug.Log("device => " + device);
         if (device == "virtual")
             return;
 
@@ -90,7 +90,7 @@ public class MqttManager : MonoBehaviour
     {
         Debug.Log($"Notificando movimento do {motorId} para o ângulo {(int)angle} às {this.networkTime.ToString("HH:mm:ss.fff")}.");
 
-        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|virtual}"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, true);
+        client.Publish(publishTopic, Encoding.UTF8.GetBytes($"{motorId}|{(int)angle}|d|virtual"), MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE, false);
     }
 
     private void OnDestroy()
