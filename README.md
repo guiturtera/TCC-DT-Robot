@@ -65,6 +65,7 @@ Necessário clonar o repositório e seguir os passos:
 3 - Configurar o Unity apontando para o IP configurado*
 
 Obs. 1: Lembrando que esse IP configurado é o serviço de nuvem configurado, ou IP da máquina virtual para replicações no ambiente de borda.
+
 Obs. 2: Somente a nova arquitetura tem suporte para o Joystick
 
 ## Link para visualização do RoboARM
