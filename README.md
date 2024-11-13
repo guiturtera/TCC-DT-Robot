@@ -4,7 +4,7 @@
 
 Este repositório reúne os itens básicos para replicação dos experimentos realizados no TCC, como o código da entidade digital(Unity), o código da entidade física(Arduino), juntamente com o json do postman para realizar as requisições e configurações do FIWARE, seja na nuvem e na borda
 ## Desafio identificado (problema)
-
+<img src="./problema.gif" alt="Meu GIF" width="300">
 ![Demonstração do trabalho anterior](./problema.gif)
 
 ## Objetivo
