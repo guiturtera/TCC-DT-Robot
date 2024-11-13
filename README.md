@@ -2,13 +2,13 @@
 ## TCC 2024 - 2º Semestre - Documentação repositório
 ## Introdução
 
-Este repositório reúne os itens básicos para replicação dos experimentos realizados no TCC, como o código da entidade digital(Unity), o código da entidade física(Arduino), juntamente com o json do postman para realizar as requisições e configurações do FIWARE, seja na nuvem e na borda
+Este repositório reúne os itens básicos para replicação dos experimentos realizados no TCC, como o código da entidade digital(Unity), o código da entidade física(Arduino), juntamente com o json do postman para realizar as requisições e configurações do FIWARE, seja na nuvem ou na borda.
 ## Desafio identificado (problema)
 <img src="./problema.gif" alt="Meu GIF" width="300">
 
 ## Objetivo
 
-Este trabalho tem por objetivo dar continuidade a um TCC anterior, de forma a reduzir o tempo de resposta através de estratégias e/ou conceitos de computação em borda e mudança de fluxo
+Este trabalho tem por objetivo dar continuidade a um TCC anterior, de forma a reduzir o tempo de resposta através de estratégias e/ou conceitos de computação em borda e mudança de fluxo.
 
 ## Hierarquia de pastas
 
