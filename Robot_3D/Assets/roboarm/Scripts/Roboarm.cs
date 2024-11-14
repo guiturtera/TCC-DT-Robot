@@ -88,7 +88,12 @@ public class Roboarm : MonoBehaviour
             return _roboarmServo1.localEulerAngles.x + 40;
         */
 
-        return _roboarmServo1.localEulerAngles.x;
+        if(_roboarmServo1.localEulerAngles.x > 150){
+            return 150;
+        }else{
+            return 150 - _roboarmServo1.localEulerAngles.x;
+        }
+
     }
 
     public void SetAngleRotationServo1(float angle)
@@ -250,21 +255,25 @@ public class Roboarm : MonoBehaviour
     {
         if (servo == "servo1")
         {
+            Debug.Log("mt1|" + GetAngleRotationServo1());
             MqttManager.instancia.NotifyMovement("mt1", GetAngleRotationServo1());    
             // HttpManager.GetInstance().PostMotorCommand("moveMotor1", GetAngleRotationServo1());
         }
         else if (servo == "servo2")
         {
+            Debug.Log("mt2|" + GetAngleRotationServo2());
             MqttManager.instancia.NotifyMovement("mt2", GetAngleRotationServo2());
             // HttpManager.GetInstance().PostMotorCommand("moveMotor2", GetAngleRotationServo2());
         }
         else if (servo == "servo3")
         {
+            Debug.Log("mt3|" + GetAngleRotationServo3());
             MqttManager.instancia.NotifyMovement("mt3", GetAngleRotationServo3());
             // HttpManager.GetInstance().PostMotorCommand("moveMotor3", GetAngleRotationServo3());
         }
         else if (servo == "servo4")
         {
+            Debug.Log("mt4|" + GetAngleRotationServo4());
             MqttManager.instancia.NotifyMovement("mt4", GetAngleRotationServo4());
             // HttpManager.GetInstance().PostMotorCommand("moveMotor4", GetAngleRotationServo4());
         }

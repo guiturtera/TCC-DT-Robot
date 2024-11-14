@@ -51,8 +51,6 @@ public class MqttManager : MonoBehaviour
 
         string[] data = ultralightString.Split("|");
         string motor = data[0], device = data[3];
-        Debug.Log("Motor => " + motor);
-        Debug.Log("device => " + device);
         if (device == "virtual")
             return;
 
