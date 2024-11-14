@@ -89,9 +89,9 @@ public class Roboarm : MonoBehaviour
         */
 
         if(_roboarmServo1.localEulerAngles.x > 150){
-            return 150;
+            return 0;
         }else{
-            return 150 - _roboarmServo1.localEulerAngles.x;
+            return _roboarmServo1.localEulerAngles.x;
         }
 
     }
@@ -112,7 +112,11 @@ public class Roboarm : MonoBehaviour
         float amount = _roboarmServo2.localEulerAngles.z >= 280 ? 360 - _roboarmServo2.localEulerAngles.z : 0;
         return 155 - amount;
         */
-        return _roboarmServo2.localEulerAngles.z;
+        if((_roboarmServo2.localEulerAngles.z - 180) < 0){
+            return 180;
+        }else{
+            return (_roboarmServo2.localEulerAngles.z - 180);
+        }
     }
 
     public void SetAngleRotationServo2(float angle)
@@ -129,15 +133,18 @@ public class Roboarm : MonoBehaviour
 
     public float GetAngleRotationServo3()
     {
-        //if(_roboarmServo3.localRotation.eulerAngles.y > 180)
-        //{
-        //    float amount = _roboarmServo3.localEulerAngles.y >= 270 ? 360 - _roboarmServo3.localEulerAngles.y : 270;
-        //    return amount + 90;
-        //}
-        //else
-        //    return 90 - _roboarmServo3.localEulerAngles.y;
+        if(_roboarmServo3.localRotation.eulerAngles.y > 180)
+        {
+           float amount = _roboarmServo3.localEulerAngles.y >= 270 ? 360 - _roboarmServo3.localEulerAngles.y : 270;
+           return amount + 90;
+        }
+        else
+           return 90 - _roboarmServo3.localEulerAngles.y;
 
-        return _roboarmServo3.localEulerAngles.y;
+        // if(_roboarmServo3.localEulerAngles.y < 90){
+        //     return 90 - _roboarmServo3.localEulerAngles.y;
+        // }
+        // return 180 - _roboarmServo3.localEulerAngles.y;
     }
 
     public void SetAngleRotationServo3(float angle)
@@ -159,8 +166,11 @@ public class Roboarm : MonoBehaviour
         //}
         //else
         //    return 66 - _roboarmServo4.localEulerAngles.x;
-
-        return _roboarmServo4.localEulerAngles.x;
+        if(_roboarmServo4.localEulerAngles.x > 150){
+            return  150;
+        }else{
+            return 150 - _roboarmServo4.localEulerAngles.x;
+        }
     }
 
     public void SetAngleRotationServo4(float angle)
