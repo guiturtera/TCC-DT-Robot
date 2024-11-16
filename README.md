@@ -16,10 +16,10 @@ Este trabalho tem por objetivo dar continuidade a um TCC anterior, de forma a re
   - **New arch**
     - **code new arch**
       - `new_arch`
-      - `new_arch_final`
-      - `new_arch_test`
+      - `new_arch_final` (Versão final utilizada para implementar no arduíno)
+      - `new_arch_test` (Versão utilizada nos teste de RTT)
   - **Old arch**
-    - `roboArmMQTT.cpp`
+    - `roboArmMQTT.cpp` (Versão na qual aplicamos mudança, arquitetura antiga)
     - `libraries`
 
 - Robo3d
