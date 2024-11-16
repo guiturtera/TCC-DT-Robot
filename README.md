@@ -72,7 +72,7 @@ Obs. 2: Somente a nova arquitetura tem suporte para o Joystick
 
 ## Link para visualização do RoboARM
 
-Link público no youtube: https://youtu.be/1FcuR2FO2eI?si=pmmdQ5fkPGrUkCJt
+Link público no youtube: [Link](https://youtu.be/1FcuR2FO2eI?si=pmmdQ5fkPGrUkCJt)
 
 
 
