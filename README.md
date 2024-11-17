@@ -29,7 +29,7 @@ Este trabalho tem por objetivo dar continuidade a um TCC anterior, de forma a re
   - *UserSettings*
   - `Robot_3D.sln`
 
-- `doc_tecnica_postman.json`
+- `RoboARM Collection Final.json`
 
 ## Hardware
 
@@ -60,7 +60,7 @@ Para mais informações, segue o link com mais especificações do produto [Robo
 
 Necessário clonar o repositório e seguir os passos:
 
-1 - Importar a `doc_tecnica_postman.json` no aplicativo do postman, e executar todos os passos, se atentando sempre para o IP configurado*;
+1 - Importar a `RoboARM Collection Final.json` no aplicativo do postman, e executar todos os passos, se atentando sempre para o IP configurado*;
 
 2 - Carregar o arduino com o código da nova ou antiga arquitetura;
 
@@ -74,5 +74,9 @@ Obs. 2: Somente a nova arquitetura tem suporte para o Joystick
 
 Link público no youtube: [Link](https://youtu.be/1FcuR2FO2eI?si=pmmdQ5fkPGrUkCJt)
 
+## Mais informações
+
+A própria coleção postman tem algumas descrições sobre o que passo faz para sua utilização, isso tudo fundamentado no [FIWARE descomplicado](https://github.com/fabiocabrini/fiware)
+Mais descrições de como se desenvolveu os testes? Acesse o link do nosso artigo através deste link -> TO-DO
 
 
