@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "e8aa98c5-fded-48cc-9d63-34a5bd3fd685",
 		"name": "RoboARM Collection Final",
-		"description": "Template utilizado para configura o FIWARE descomplicado para comunicação entre a entidade física e a entidade virtual(digital twin).\n\nSe atente para as variáveis que aponta para o IP e os paths\n\nO passo 1 e 2 servem para análise de conexão e funcionamento do Broker\n\n3 e 3.1 cria o serviço e verifica se o mesmo foi provisionado\n\n4 -> 5 Provisiona o dispositivo IoT e faz as subscrições(no caso para a arquitetura anterior)\n\n6 Configura o path metrics, para as medições de RTT  \n  \nGlossário:\n\nSub -> Subscription\n\nAttr -> Attribute",
+		"description": "Template utilizado para configurar o FIWARE descomplicado para comunicação entre a entidade física e a entidade virtual(digital twin).\n\nSe atente para as variáveis que aponta para o IP e os paths\n\nO passo 1 e 2 servem para análise de conexão e funcionamento do Broker\n\n3 e 3.1 cria o serviço e verifica se o mesmo foi provisionado\n\n4 -> 5 Provisiona o dispositivo IoT e faz as subscrições(no caso para a arquitetura anterior)\n\n6 Configura o path metrics, para as medições de RTT  \n  \nGlossário:\n\nSub -> Subscription\n\nAttr -> Attribute",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "18251203"
 	},
