@@ -81,4 +81,4 @@ Mais descrições de como se desenvolveu os testes? Acesse o link do nosso artig
 
 ## Resultado
 
-<img src="./resultado.gif" alt="Meu GIF" width="400">
+<iframe width="560" height="315" src="https://youtu.be/1FcuR2FO2eI" frameborder="0" allowfullscreen></iframe>
