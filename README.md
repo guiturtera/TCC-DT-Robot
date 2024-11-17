@@ -78,7 +78,3 @@ Link público no youtube: [Link](https://youtu.be/1FcuR2FO2eI?si=pmmdQ5fkPGrUkCJ
 
 A própria coleção postman tem algumas descrições sobre o que passo faz para sua utilização, isso tudo fundamentado no [FIWARE descomplicado](https://github.com/fabiocabrini/fiware)
 Mais descrições de como se desenvolveu os testes? Acesse o link do nosso artigo através deste link -> TO-DO
-
-## Resultado
-
-<iframe width="560" height="315" src="https://youtu.be/1FcuR2FO2eI" frameborder="0" allowfullscreen></iframe>
